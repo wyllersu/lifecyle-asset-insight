@@ -14,13 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assets: {
+        Row: {
+          category_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          current_location: string | null
+          description: string | null
+          id: string
+          latitude: number | null
+          location_type: string | null
+          longitude: number | null
+          name: string
+          purchase_date: string
+          purchase_value: number
+          residual_value: number | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string
+          useful_life_years: number
+        }
+        Insert: {
+          category_id?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_location?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          location_type?: string | null
+          longitude?: number | null
+          name: string
+          purchase_date: string
+          purchase_value: number
+          residual_value?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          useful_life_years?: number
+        }
+        Update: {
+          category_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_location?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          location_type?: string | null
+          longitude?: number | null
+          name?: string
+          purchase_date?: string
+          purchase_value?: number
+          residual_value?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          useful_life_years?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          asset_id: string | null
+          created_at: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          name: string
+          type: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          type: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          type?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_book_value: {
+        Args: {
+          purchase_date: string
+          purchase_value: number
+          residual_value: number
+          useful_life_years: number
+        }
+        Returns: number
+      }
+      calculate_depreciation: {
+        Args: {
+          purchase_date: string
+          purchase_value: number
+          residual_value: number
+          useful_life_years: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
