@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Dashboard from '@/components/Dashboard';
 import AssetForm from '@/components/AssetForm';
 import AssetList from '@/components/AssetList';
+import ReportGenerator from '@/components/ReportGenerator';
 import { Building2, Package, Plus, List, BarChart3, LogOut, User } from 'lucide-react';
 
 const Index = () => {
@@ -97,7 +98,7 @@ const Index = () => {
           </div>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <Dashboard />
+            <Dashboard setActiveTab={setActiveTab} />
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-6">
@@ -111,17 +112,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">
-            <Card className="bg-gradient-card border-border/50">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Relatórios em Desenvolvimento
-                </h3>
-                <p className="text-muted-foreground text-center">
-                  Em breve você poderá gerar relatórios detalhados de depreciação e conformidade fiscal.
-                </p>
-              </CardContent>
-            </Card>
+            <ReportGenerator />
           </TabsContent>
         </Tabs>
       </main>

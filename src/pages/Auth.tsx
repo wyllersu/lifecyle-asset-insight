@@ -14,7 +14,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const { signIn, signUp, user, resendConfirmation } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,15 +28,28 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setShowResendConfirmation(false);
 
     const { error } = await signIn(email, password);
 
     if (error) {
+      let description = 'Ocorreu um erro inesperado';
+      
+      if (error.message === 'Invalid login credentials') {
+        description = 'Email ou senha incorretos';
+      } else if (error.message === 'Email not confirmed') {
+        description = 'Email não confirmado. Verifique sua caixa de entrada.';
+        setShowResendConfirmation(true);
+      } else if (error.message.includes('email not confirmed')) {
+        description = 'Email não confirmado. Verifique sua caixa de entrada.';
+        setShowResendConfirmation(true);
+      } else {
+        description = error.message;
+      }
+      
       toast({
         title: "Erro ao fazer login",
-        description: error.message === 'Invalid login credentials' 
-          ? 'Email ou senha incorretos'
-          : error.message,
+        description,
         variant: "destructive",
       });
     } else {
@@ -55,11 +69,17 @@ const Auth = () => {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
+      let description = 'Ocorreu um erro inesperado';
+      
+      if (error.message === 'User already registered') {
+        description = 'Este email já está cadastrado';
+      } else {
+        description = error.message;
+      }
+      
       toast({
         title: "Erro ao criar conta",
-        description: error.message === 'User already registered' 
-          ? 'Este email já está cadastrado'
-          : error.message,
+        description,
         variant: "destructive",
       });
     } else {
@@ -69,6 +89,28 @@ const Auth = () => {
       });
     }
 
+    setLoading(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    setLoading(true);
+    
+    const { error } = await resendConfirmation(email);
+    
+    if (error) {
+      toast({
+        title: "Erro ao reenviar confirmação",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Email reenviado!",
+        description: "Verifique sua caixa de entrada",
+      });
+      setShowResendConfirmation(false);
+    }
+    
     setLoading(false);
   };
 
@@ -133,6 +175,19 @@ const Auth = () => {
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
+                  
+                  {showResendConfirmation && (
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleResendConfirmation}
+                      disabled={loading}
+                    >
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Reenviar Confirmação
+                    </Button>
+                  )}
                 </form>
               </TabsContent>
               

@@ -10,7 +10,11 @@ interface DashboardStats {
   totalBookValue: number;
 }
 
-const Dashboard = () => {
+interface DashboardProps {
+  setActiveTab?: (tab: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalAssets: 0,
     totalValue: 0,
@@ -89,7 +93,7 @@ const Dashboard = () => {
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${valueColor}`}>
-          {typeof value === 'number' ? formatCurrency(value) : value}
+          {title === "Total de Ativos" ? value : (typeof value === 'number' ? formatCurrency(value) : value)}
         </div>
         <p className="text-xs text-muted-foreground">
           {description}
@@ -129,7 +133,7 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Ativos"
-          value={stats.totalAssets}
+          value={stats.totalAssets.toString()}
           description="Itens cadastrados no sistema"
           icon={Package}
         />
@@ -204,11 +208,17 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 text-left border border-border rounded-lg hover:bg-accent/20 transition-colors">
+              <button 
+                className="p-4 text-left border border-border rounded-lg hover:bg-accent/20 transition-colors"
+                onClick={() => setActiveTab?.('add-asset')}
+              >
                 <div className="font-semibold text-foreground">Novo Ativo</div>
                 <div className="text-sm text-muted-foreground">Cadastrar item</div>
               </button>
-              <button className="p-4 text-left border border-border rounded-lg hover:bg-accent/20 transition-colors">
+              <button 
+                className="p-4 text-left border border-border rounded-lg hover:bg-accent/20 transition-colors"
+                onClick={() => setActiveTab?.('reports')}
+              >
                 <div className="font-semibold text-foreground">Relatórios</div>
                 <div className="text-sm text-muted-foreground">Gerar relatório</div>
               </button>

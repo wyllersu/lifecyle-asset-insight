@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_audit_log: {
+        Row: {
+          action: string
+          asset_id: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          asset_id: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          asset_id?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           category_id: string | null
@@ -30,6 +60,7 @@ export type Database = {
           purchase_date: string
           purchase_value: number
           residual_value: number | null
+          rfid_id: string | null
           serial_number: string | null
           status: string | null
           updated_at: string
@@ -50,6 +81,7 @@ export type Database = {
           purchase_date: string
           purchase_value: number
           residual_value?: number | null
+          rfid_id?: string | null
           serial_number?: string | null
           status?: string | null
           updated_at?: string
@@ -70,6 +102,7 @@ export type Database = {
           purchase_date?: string
           purchase_value?: number
           residual_value?: number | null
+          rfid_id?: string | null
           serial_number?: string | null
           status?: string | null
           updated_at?: string

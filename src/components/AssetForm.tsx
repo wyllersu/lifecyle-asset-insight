@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, Plus, X } from 'lucide-react';
+import { CalendarIcon, Loader2, Plus, X, Camera, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +36,9 @@ interface AssetFormData {
   latitude: string;
   longitude: string;
   status: 'active' | 'maintenance' | 'inactive' | 'disposed';
+  rfid_id: string;
+  photo: File | null;
+  document: File | null;
 }
 
 interface AssetFormProps {
@@ -64,6 +67,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     latitude: '',
     longitude: '',
     status: 'active',
+    rfid_id: '',
+    photo: null,
+    document: null,
   });
 
   useEffect(() => {
@@ -95,6 +101,34 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     setFormData(prev => ({ ...prev, code: `AST${timestamp}${random}` }));
   };
 
+  const uploadFile = async (file: File, path: string) => {
+    const { data, error } = await supabase.storage
+      .from('asset_documents')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+    return data;
+  };
+
+  const createAuditLog = async (assetId: string, action: string, newData: any) => {
+    const { error } = await supabase
+      .from('asset_audit_log')
+      .insert({
+        asset_id: assetId,
+        user_id: user?.id,
+        action,
+        old_data: null,
+        new_data: newData
+      });
+
+    if (error) {
+      console.error('Error creating audit log:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -117,14 +151,77 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         status: formData.status,
+        rfid_id: formData.rfid_id || null,
         created_by: user.id,
       };
 
-      const { error } = await supabase
+      const { data: asset, error } = await supabase
         .from('assets')
-        .insert([assetData]);
+        .insert([assetData])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Upload files if provided
+      if (formData.photo) {
+        try {
+          const photoPath = `${asset.id}/photo_${Date.now()}.${formData.photo.name.split('.').pop()}`;
+          await uploadFile(formData.photo, photoPath);
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('asset_documents')
+            .getPublicUrl(photoPath);
+
+          await supabase.from('documents').insert({
+            asset_id: asset.id,
+            name: formData.photo.name,
+            type: 'photo',
+            file_url: publicUrl,
+            file_size: formData.photo.size,
+            mime_type: formData.photo.type,
+            uploaded_by: user.id
+          });
+        } catch (photoError) {
+          console.error('Error uploading photo:', photoError);
+          toast({
+            title: "Aviso",
+            description: "Ativo cadastrado, mas erro ao enviar foto",
+            variant: "destructive",
+          });
+        }
+      }
+
+      if (formData.document) {
+        try {
+          const docPath = `${asset.id}/document_${Date.now()}.${formData.document.name.split('.').pop()}`;
+          await uploadFile(formData.document, docPath);
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('asset_documents')
+            .getPublicUrl(docPath);
+
+          await supabase.from('documents').insert({
+            asset_id: asset.id,
+            name: formData.document.name,
+            type: 'document',
+            file_url: publicUrl,
+            file_size: formData.document.size,
+            mime_type: formData.document.type,
+            uploaded_by: user.id
+          });
+        } catch (docError) {
+          console.error('Error uploading document:', docError);
+          toast({
+            title: "Aviso",
+            description: "Ativo cadastrado, mas erro ao enviar documento",
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Create audit log
+      await createAuditLog(asset.id, 'create', assetData);
 
       toast({
         title: "Ativo cadastrado com sucesso!",
@@ -147,6 +244,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         latitude: '',
         longitude: '',
         status: 'active',
+        rfid_id: '',
+        photo: null,
+        document: null,
       });
 
       onSuccess?.();
@@ -252,6 +352,55 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
             </div>
           </div>
 
+          {/* Upload de Arquivos */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+              Documentos e Fotos
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="photo">Foto do Ativo</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      photo: e.target.files?.[0] || null 
+                    }))}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="sm" disabled>
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                </div>
+                {formData.photo && (
+                  <p className="text-xs text-muted-foreground">
+                    Arquivo selecionado: {formData.photo.name}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="document">Documento (Ex: Nota Fiscal)</Label>
+                <Input
+                  id="document"
+                  type="file"
+                  accept="application/pdf,image/*"
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    document: e.target.files?.[0] || null 
+                  }))}
+                />
+                {formData.document && (
+                  <p className="text-xs text-muted-foreground">
+                    Arquivo selecionado: {formData.document.name}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Financeiro */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
@@ -340,7 +489,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                 <Label>Tipo de Rastreamento</Label>
                 <Select 
                   value={formData.location_type} 
-                  onValueChange={(value: any) => setFormData(prev => ({ ...prev, location_type: value }))}
+                  onValueChange={(value: any) => setFormData(prev => ({ 
+                    ...prev, 
+                    location_type: value,
+                    rfid_id: value !== 'rfid' ? '' : prev.rfid_id 
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -370,6 +523,17 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                 </Select>
               </div>
             </div>
+            {formData.location_type === 'rfid' && (
+              <div className="space-y-2">
+                <Label htmlFor="rfid_id">ID RFID</Label>
+                <Input
+                  id="rfid_id"
+                  value={formData.rfid_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rfid_id: e.target.value }))}
+                  placeholder="Ex: RFID123456789"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="current_location">Localização Atual</Label>
               <Input
