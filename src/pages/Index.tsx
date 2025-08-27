@@ -8,7 +8,10 @@ import Dashboard from '@/components/Dashboard';
 import AssetForm from '@/components/AssetForm';
 import AssetList from '@/components/AssetList';
 import ReportGenerator from '@/components/ReportGenerator';
-import { Building2, Package, Plus, List, BarChart3, LogOut, User } from 'lucide-react';
+import MaintenanceDashboard from '@/components/MaintenanceDashboard';
+import AssetMap from '@/components/AssetMap';
+import QRCodeScanner from '@/components/QRCodeScanner';
+import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin } from 'lucide-react';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -77,7 +80,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-4 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-6 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
@@ -89,6 +92,14 @@ const Index = () => {
               <TabsTrigger value="add-asset" className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
                 Novo Ativo
+              </TabsTrigger>
+              <TabsTrigger value="maintenance" className="flex items-center gap-2">
+                <Wrench className="w-4 h-4" />
+                Manutenção
+              </TabsTrigger>
+              <TabsTrigger value="tracking" className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Rastreamento
               </TabsTrigger>
               <TabsTrigger value="reports" className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
@@ -109,6 +120,25 @@ const Index = () => {
             <AssetForm 
               onSuccess={() => setActiveTab('inventory')}
             />
+          </TabsContent>
+
+          <TabsContent value="maintenance" className="space-y-6">
+            <MaintenanceDashboard />
+          </TabsContent>
+
+          <TabsContent value="tracking" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AssetMap height="500px" />
+              <div className="space-y-6">
+                <QRCodeScanner 
+                  onScan={(result) => console.log('QR Scanned:', result)}
+                  onAssetFound={(assetCode) => {
+                    console.log('Asset found:', assetCode);
+                    // Here you could redirect to asset details or show asset info
+                  }}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">

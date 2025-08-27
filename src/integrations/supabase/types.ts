@@ -44,6 +44,148 @@ export type Database = {
         }
         Relationships: []
       }
+      asset_disposal: {
+        Row: {
+          asset_id: string
+          buyer_info: string | null
+          certificate_url: string | null
+          created_at: string
+          disposal_date: string
+          disposal_method: string
+          disposal_reason: string
+          environmental_compliance: boolean | null
+          id: string
+          sale_value: number | null
+        }
+        Insert: {
+          asset_id: string
+          buyer_info?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          disposal_date: string
+          disposal_method: string
+          disposal_reason: string
+          environmental_compliance?: boolean | null
+          id?: string
+          sale_value?: number | null
+        }
+        Update: {
+          asset_id?: string
+          buyer_info?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          disposal_date?: string
+          disposal_method?: string
+          disposal_reason?: string
+          environmental_compliance?: boolean | null
+          id?: string
+          sale_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_disposal_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_maintenance: {
+        Row: {
+          asset_id: string
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          labor_hours: number | null
+          maintenance_type: string
+          next_maintenance_date: string | null
+          parts_used: Json | null
+          performed_by: string | null
+          scheduled_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          labor_hours?: number | null
+          maintenance_type: string
+          next_maintenance_date?: string | null
+          parts_used?: Json | null
+          performed_by?: string | null
+          scheduled_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          labor_hours?: number | null
+          maintenance_type?: string
+          next_maintenance_date?: string | null
+          parts_used?: Json | null
+          performed_by?: string | null
+          scheduled_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenance_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_parts: {
+        Row: {
+          asset_id: string
+          id: string
+          part_id: string
+          quantity_required: number
+        }
+        Insert: {
+          asset_id: string
+          id?: string
+          part_id: string
+          quantity_required?: number
+        }
+        Update: {
+          asset_id?: string
+          id?: string
+          part_id?: string
+          quantity_required?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_parts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_parts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "spare_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           category_id: string | null
@@ -51,6 +193,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           current_location: string | null
+          department_id: string | null
           description: string | null
           id: string
           latitude: number | null
@@ -72,6 +215,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          department_id?: string | null
           description?: string | null
           id?: string
           latitude?: number | null
@@ -93,6 +237,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          department_id?: string | null
           description?: string | null
           id?: string
           latitude?: number | null
@@ -116,6 +261,13 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "assets_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       categories: {
@@ -135,6 +287,33 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          budget: number | null
+          created_at: string
+          description: string | null
+          id: string
+          manager_id: string | null
+          name: string
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
+          name: string
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
           name?: string
         }
         Relationships: []
@@ -183,6 +362,45 @@ export type Database = {
           },
         ]
       }
+      maintenance_parts: {
+        Row: {
+          cost_per_unit: number
+          id: string
+          maintenance_id: string
+          part_id: string
+          quantity_used: number
+        }
+        Insert: {
+          cost_per_unit?: number
+          id?: string
+          maintenance_id: string
+          part_id: string
+          quantity_used?: number
+        }
+        Update: {
+          cost_per_unit?: number
+          id?: string
+          maintenance_id?: string
+          part_id?: string
+          quantity_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_parts_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "asset_maintenance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_parts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "spare_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -210,6 +428,75 @@ export type Database = {
           role?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      saved_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parameters: Json | null
+          prompt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parameters?: Json | null
+          prompt: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parameters?: Json | null
+          prompt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      spare_parts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          part_number: string
+          stock_quantity: number
+          supplier: string | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          part_number: string
+          stock_quantity?: number
+          supplier?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          part_number?: string
+          stock_quantity?: number
+          supplier?: string | null
+          unit_cost?: number
+          updated_at?: string
         }
         Relationships: []
       }

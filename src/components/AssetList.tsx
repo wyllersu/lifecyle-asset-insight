@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Package, Building2, Wrench, XCircle, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Search, Filter, Package, Building2, Wrench, XCircle, Trash2, QrCode, History, Eye, Edit } from 'lucide-react';
+import QRCodeGenerator from '@/components/QRCodeGenerator';
+import AssetHistory from '@/components/AssetHistory';
 import { useToast } from '@/hooks/use-toast';
 
 interface Asset {
@@ -328,9 +331,42 @@ const AssetList = () => {
 
                   <div className="flex items-center gap-2 lg:flex-col lg:items-end">
                     <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4 mr-1" />
                       Editar
                     </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <QrCode className="h-4 w-4 mr-1" />
+                          QR Code
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <QRCodeGenerator 
+                          assetCode={asset.code} 
+                          assetName={asset.name} 
+                        />
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <History className="h-4 w-4 mr-1" />
+                          Histórico
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl">
+                        <AssetHistory 
+                          assetId={asset.id} 
+                          assetName={asset.name} 
+                        />
+                      </DialogContent>
+                    </Dialog>
+
                     <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4 mr-1" />
                       Detalhes
                     </Button>
                   </div>
