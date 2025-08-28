@@ -188,6 +188,7 @@ export type Database = {
       }
       assets: {
         Row: {
+          assigned_to: string | null
           category_id: string | null
           code: string
           created_at: string
@@ -210,6 +211,7 @@ export type Database = {
           useful_life_years: number
         }
         Insert: {
+          assigned_to?: string | null
           category_id?: string | null
           code: string
           created_at?: string
@@ -232,6 +234,7 @@ export type Database = {
           useful_life_years?: number
         }
         Update: {
+          assigned_to?: string | null
           category_id?: string | null
           code?: string
           created_at?: string
@@ -254,6 +257,13 @@ export type Database = {
           useful_life_years?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "assets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "assets_category_id_fkey"
             columns: ["category_id"]
