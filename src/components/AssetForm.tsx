@@ -37,6 +37,7 @@ interface AssetFormData {
   longitude: string;
   status: 'active' | 'maintenance' | 'inactive' | 'disposed';
   rfid_id: string;
+  assigned_to: string;
   photo: File | null;
   document: File | null;
 }
@@ -51,6 +52,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   
   const [formData, setFormData] = useState<AssetFormData>({
     name: '',
@@ -68,13 +70,26 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     longitude: '',
     status: 'active',
     rfid_id: '',
+    assigned_to: '',
     photo: null,
     document: null,
   });
 
   useEffect(() => {
     fetchCategories();
+    fetchProfiles();
   }, []);
+
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('user_id, full_name, avatar_url')
+      .order('full_name');
+    
+    if (data) {
+      setProfiles(data);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -152,6 +167,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         status: formData.status,
         rfid_id: formData.rfid_id || null,
+        assigned_to: formData.assigned_to || null,
         created_by: user.id,
       };
 
@@ -245,6 +261,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         longitude: '',
         status: 'active',
         rfid_id: '',
+        assigned_to: '',
         photo: null,
         document: null,
       });
@@ -585,6 +602,32 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                 Cancelar
               </Button>
             )}
+          </div>
+
+          {/* Assignment Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+              Atribuição de Responsabilidade
+            </h3>
+            <div className="space-y-2">
+              <Label htmlFor="assigned_to">Responsável pelo Ativo</Label>
+              <Select 
+                value={formData.assigned_to} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_to: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um responsável (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Não atribuir responsável</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.user_id} value={profile.user_id}>
+                      {profile.full_name || profile.user_id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </form>
       </CardContent>
