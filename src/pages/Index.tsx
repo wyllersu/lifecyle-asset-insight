@@ -11,7 +11,9 @@ import ReportGenerator from '@/components/ReportGenerator';
 import MaintenanceDashboard from '@/components/MaintenanceDashboard';
 import AssetMap from '@/components/AssetMap';
 import QRCodeScanner from '@/components/QRCodeScanner';
-import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin } from 'lucide-react';
+import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin, Users, Tag, FileText } from 'lucide-react';
+import UserManagement from '@/components/UserManagement';
+import CategoryManager from '@/components/CategoryManager';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -80,7 +82,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-6 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-8 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
@@ -102,8 +104,16 @@ const Index = () => {
                 Rastreamento
               </TabsTrigger>
               <TabsTrigger value="reports" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
                 Relatórios
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Usuários
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Categorias
               </TabsTrigger>
             </TabsList>
           </div>
@@ -143,6 +153,14 @@ const Index = () => {
 
           <TabsContent value="reports" className="space-y-6">
             <ReportGenerator />
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="categories" className="space-y-6">
+            <CategoryManager />
           </TabsContent>
         </Tabs>
       </main>

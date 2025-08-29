@@ -21,12 +21,26 @@ interface Category {
   description: string;
 }
 
+interface Department {
+  id: string;
+  name: string;
+}
+
+interface Unit {
+  id: string;
+  name: string;
+  department_id: string;
+  departments?: { name: string };
+}
+
 interface AssetFormData {
   name: string;
   code: string;
   serial_number: string;
   description: string;
   category_id: string;
+  department_id: string;
+  unit_id: string;
   purchase_value: string;
   purchase_date: Date | undefined;
   residual_value: string;
@@ -52,6 +66,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   
   const [formData, setFormData] = useState<AssetFormData>({
@@ -60,6 +76,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     serial_number: '',
     description: '',
     category_id: '',
+    department_id: '',
+    unit_id: '',
     purchase_value: '',
     purchase_date: undefined,
     residual_value: '0',
@@ -76,9 +94,26 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
   });
 
   useEffect(() => {
-    fetchCategories();
-    fetchProfiles();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [categoriesResult, departmentsResult, unitsResult, profilesResult] = await Promise.all([
+        supabase.from('categories').select('id, name').order('name'),
+        supabase.from('departments').select('id, name').order('name'),
+        supabase.from('units').select('id, name, department_id, departments(name)').order('name'),
+        supabase.from('profiles').select('user_id, full_name').order('full_name')
+      ]);
+
+      if (categoriesResult.data) setCategories(categoriesResult.data.map(cat => ({ ...cat, description: '' })));
+      if (departmentsResult.data) setDepartments(departmentsResult.data);
+      if (unitsResult.data) setUnits(unitsResult.data);
+      if (profilesResult.data) setProfiles(profilesResult.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const fetchProfiles = async () => {
     const { data, error } = await supabase
@@ -156,7 +191,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         code: formData.code,
         serial_number: formData.serial_number || null,
         description: formData.description || null,
-        category_id: formData.category_id || null,
+        category_id: formData.category_id === "unassigned" ? null : formData.category_id || null,
+        department_id: formData.department_id === "unassigned" ? null : formData.department_id || null,
+        unit_id: formData.unit_id === "unassigned" ? null : formData.unit_id || null,
         purchase_value: parseFloat(formData.purchase_value),
         purchase_date: formData.purchase_date?.toISOString().split('T')[0],
         residual_value: parseFloat(formData.residual_value),
@@ -251,6 +288,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         serial_number: '',
         description: '',
         category_id: '',
+        department_id: '',
+        unit_id: '',
         purchase_value: '',
         purchase_date: undefined,
         residual_value: '0',
@@ -604,11 +643,59 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
             )}
           </div>
 
-          {/* Assignment Section */}
+          {/* Organização */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
-              Atribuição de Responsabilidade
+              Organização e Responsabilidade
             </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="department_id">Departamento</Label>
+                <Select 
+                  value={formData.department_id} 
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      department_id: value,
+                      unit_id: 'unassigned'
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Não atribuir departamento</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="unit_id">Unidade</Label>
+                <Select value={formData.unit_id} onValueChange={(value) => setFormData(prev => ({ ...prev, unit_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Não atribuir unidade</SelectItem>
+                    {units
+                      .filter(unit => 
+                        formData.department_id === 'unassigned' || formData.department_id === '' ? 
+                        true : unit.department_id === formData.department_id
+                      )
+                      .map((unit) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.name} ({unit.departments?.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="assigned_to">Responsável pelo Ativo</Label>
               <Select 
