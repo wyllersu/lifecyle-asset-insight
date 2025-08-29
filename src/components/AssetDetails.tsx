@@ -93,9 +93,10 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
   const handleAssignResponsible = async (userId: string | null) => {
     setUpdating(true);
     try {
+      const assignedValue = userId === "unassigned" ? null : userId;
       const { error } = await supabase
         .from('assets')
-        .update({ assigned_to: userId })
+        .update({ assigned_to: assignedValue })
         .eq('id', assetId);
 
       if (error) throw error;
@@ -105,9 +106,9 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
       if (userData.user) {
         await supabase.from('asset_audit_log').insert({
           asset_id: assetId,
-          action: userId ? 'assigned_responsible' : 'removed_responsible',
+          action: assignedValue ? 'assigned_responsible' : 'removed_responsible',
           user_id: userData.user.id,
-          new_data: { assigned_to: userId },
+          new_data: { assigned_to: assignedValue },
           old_data: { assigned_to: asset.assigned_to }
         });
       }
@@ -118,7 +119,7 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
 
       toast({
         title: "Responsável atualizado",
-        description: userId ? "Responsável atribuído com sucesso." : "Responsável removido com sucesso.",
+        description: assignedValue ? "Responsável atribuído com sucesso." : "Responsável removido com sucesso.",
       });
     } catch (error) {
       console.error('Error updating responsible:', error);
@@ -243,7 +244,7 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
                 <div className="space-y-2">
                   <span className="text-sm text-muted-foreground">Atribuir responsável:</span>
                   <Select 
-                    value={asset.assigned_to || ""} 
+                    value={asset.assigned_to || "unassigned"} 
                     onValueChange={handleAssignResponsible}
                     disabled={updating}
                   >
@@ -251,7 +252,7 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
                       <SelectValue placeholder="Selecione um responsável" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Remover responsável</SelectItem>
+                      <SelectItem value="unassigned">Remover responsável</SelectItem>
                       {profiles.map((profile) => (
                         <SelectItem key={profile.user_id} value={profile.user_id}>
                           {profile.full_name || profile.user_id}

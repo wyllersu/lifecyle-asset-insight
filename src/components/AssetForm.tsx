@@ -167,7 +167,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         status: formData.status,
         rfid_id: formData.rfid_id || null,
-        assigned_to: formData.assigned_to || null,
+        assigned_to: formData.assigned_to === "unassigned" ? null : formData.assigned_to || null,
         created_by: user.id,
       };
 
@@ -619,7 +619,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                   <SelectValue placeholder="Selecione um responsável (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não atribuir responsável</SelectItem>
+                  <SelectItem value="unassigned">Não atribuir responsável</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.user_id} value={profile.user_id}>
                       {profile.full_name || profile.user_id}
