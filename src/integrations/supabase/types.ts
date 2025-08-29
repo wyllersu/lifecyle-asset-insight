@@ -207,6 +207,7 @@ export type Database = {
           rfid_id: string | null
           serial_number: string | null
           status: string | null
+          unit_id: string | null
           updated_at: string
           useful_life_years: number
         }
@@ -230,6 +231,7 @@ export type Database = {
           rfid_id?: string | null
           serial_number?: string | null
           status?: string | null
+          unit_id?: string | null
           updated_at?: string
           useful_life_years?: number
         }
@@ -253,6 +255,7 @@ export type Database = {
           rfid_id?: string | null
           serial_number?: string | null
           status?: string | null
+          unit_id?: string | null
           updated_at?: string
           useful_life_years?: number
         }
@@ -276,6 +279,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
@@ -415,31 +425,52 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          department_id: string | null
           full_name: string | null
           id: string
           role: string | null
+          unit_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name?: string | null
           id?: string
           role?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name?: string | null
           id?: string
           role?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_reports: {
         Row: {
@@ -509,6 +540,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      units: {
+        Row: {
+          created_at: string
+          department_id: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
