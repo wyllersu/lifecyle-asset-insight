@@ -8,8 +8,8 @@ import Dashboard from '@/components/Dashboard';
 import AssetForm from '@/components/AssetForm';
 import AssetList from '@/components/AssetList';
 import ReportGenerator from '@/components/ReportGenerator';
-import MaintenanceDashboard from '@/components/MaintenanceDashboard';
-import AssetMap from '@/components/AssetMap';
+import EnhancedMaintenanceDashboard from '@/components/EnhancedMaintenanceDashboard';
+import GoogleAssetMap from '@/components/GoogleAssetMap';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin, Users, Tag, FileText } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
@@ -82,7 +82,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-8 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-7 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
@@ -107,13 +107,9 @@ const Index = () => {
                 <FileText className="w-4 h-4" />
                 Relatórios
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
+              <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                Usuários
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Categorias
+                Configurações
               </TabsTrigger>
             </TabsList>
           </div>
@@ -133,12 +129,12 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="maintenance" className="space-y-6">
-            <MaintenanceDashboard />
+            <EnhancedMaintenanceDashboard />
           </TabsContent>
 
           <TabsContent value="tracking" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AssetMap height="500px" />
+              <GoogleAssetMap height="500px" />
               <div className="space-y-6">
                 <QRCodeScanner 
                   onScan={(result) => console.log('QR Scanned:', result)}
@@ -155,12 +151,27 @@ const Index = () => {
             <ReportGenerator />
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <UserManagement />
-          </TabsContent>
-
-          <TabsContent value="categories" className="space-y-6">
-            <CategoryManager />
+          <TabsContent value="settings" className="space-y-6">
+            <Tabs defaultValue="users" className="space-y-6">
+              <TabsList className="grid w-auto grid-cols-2 bg-card/50">
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Usuários
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  Categorias
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="users">
+                <UserManagement />
+              </TabsContent>
+              
+              <TabsContent value="categories">
+                <CategoryManager />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </main>

@@ -50,6 +50,7 @@ const UserManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
 
   // Form states
   const [departmentForm, setDepartmentForm] = useState({
@@ -62,6 +63,15 @@ const UserManagement = () => {
     name: '',
     description: '',
     department_id: ''
+  });
+
+  const [userForm, setUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    role: 'user' as 'admin' | 'manager' | 'user',
+    department_id: '',
+    unit_id: ''
   });
 
   useEffect(() => {
@@ -208,6 +218,70 @@ const UserManagement = () => {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!userForm.email || !userForm.password || !userForm.full_name) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create user account through Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userForm.email,
+        password: userForm.password,
+        options: {
+          data: {
+            full_name: userForm.full_name,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            full_name: userForm.full_name,
+            role: userForm.role,
+            department_id: userForm.department_id || null,
+            unit_id: userForm.unit_id || null,
+          });
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Sucesso",
+          description: "Usuário criado com sucesso!",
+        });
+
+        setUserForm({
+          email: '',
+          password: '',
+          full_name: '',
+          role: 'user',
+          department_id: '',
+          unit_id: ''
+        });
+        setIsUserDialogOpen(false);
+        fetchData();
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getDepartmentName = (departmentId: string | null) => {
     if (!departmentId) return 'Não atribuído';
     const dept = departments.find(d => d.id === departmentId);
@@ -258,11 +332,126 @@ const UserManagement = () => {
 
         <TabsContent value="users" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Lista de Usuários</CardTitle>
-              <CardDescription>
-                Visualize e gerencie a atribuição de usuários a departamentos e unidades
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Lista de Usuários</CardTitle>
+                <CardDescription>
+                  Visualize e gerencie a atribuição de usuários a departamentos e unidades
+                </CardDescription>
+              </div>
+              <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Usuário
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Usuário</DialogTitle>
+                    <DialogDescription>
+                      Adicione um novo usuário ao sistema
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="user-email">Email *</Label>
+                      <Input
+                        id="user-email"
+                        type="email"
+                        value={userForm.email}
+                        onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                        placeholder="usuario@exemplo.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-password">Senha *</Label>
+                      <Input
+                        id="user-password"
+                        type="password"
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-name">Nome Completo *</Label>
+                      <Input
+                        id="user-name"
+                        value={userForm.full_name}
+                        onChange={(e) => setUserForm({...userForm, full_name: e.target.value})}
+                        placeholder="Nome completo do usuário"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-role">Cargo</Label>
+                      <Select 
+                        value={userForm.role} 
+                        onValueChange={(value: 'admin' | 'manager' | 'user') => 
+                          setUserForm({...userForm, role: value})
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário</SelectItem>
+                          <SelectItem value="manager">Gerente</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="user-department">Departamento</Label>
+                      <Select 
+                        value={userForm.department_id} 
+                        onValueChange={(value) => setUserForm({...userForm, department_id: value, unit_id: ''})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um departamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {userForm.department_id && (
+                      <div className="space-y-2">
+                        <Label htmlFor="user-unit">Unidade</Label>
+                        <Select 
+                          value={userForm.unit_id} 
+                          onValueChange={(value) => setUserForm({...userForm, unit_id: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma unidade" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {units
+                              .filter(unit => unit.department_id === userForm.department_id)
+                              .map((unit) => (
+                              <SelectItem key={unit.id} value={unit.id}>
+                                {unit.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleCreateUser}>
+                        Criar Usuário
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <Table>
