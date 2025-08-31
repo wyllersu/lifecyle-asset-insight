@@ -65,10 +65,17 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    category: string;
+    usefulLife: number;
+    confidence: string;
+    reasoning: string;
+  } | null>(null);
   
   const [formData, setFormData] = useState<AssetFormData>({
     name: '',
@@ -176,6 +183,67 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
 
     if (error) {
       console.error('Error creating audit log:', error);
+    }
+  };
+
+  const analyzeAssetWithAI = async (assetName: string) => {
+    if (!assetName || assetName.length < 3) return;
+    
+    setAiAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-asset-analysis', {
+        body: {
+          assetName,
+          categories: categories
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.analysis) {
+        const { suggestedCategory, suggestedUsefulLife, confidence, reasoning } = data.analysis;
+        
+        // Find category ID by name
+        const category = categories.find(cat => 
+          cat.name.toLowerCase() === suggestedCategory.toLowerCase()
+        );
+
+        setAiSuggestion({
+          category: category?.id || '',
+          usefulLife: suggestedUsefulLife,
+          confidence,
+          reasoning
+        });
+
+        toast({
+          title: "IA analisou o ativo",
+          description: `Sugestão: ${suggestedCategory} - ${suggestedUsefulLife} anos (${confidence} confiança)`,
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing asset:', error);
+      toast({
+        title: "Erro na análise",
+        description: "Não foi possível analisar o ativo com IA",
+        variant: "destructive",
+      });
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
+  const applySuggestion = () => {
+    if (aiSuggestion) {
+      setFormData(prev => ({
+        ...prev,
+        category_id: aiSuggestion.category,
+        useful_life_years: aiSuggestion.usefulLife.toString()
+      }));
+      setAiSuggestion(null);
+      toast({
+        title: "Sugestões aplicadas",
+        description: "Categoria e vida útil foram preenchidas automaticamente",
+      });
     }
   };
 
@@ -343,13 +411,43 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do Item *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Ex: Notebook Dell Inspiron"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onBlur={() => formData.name && analyzeAssetWithAI(formData.name)}
+                    placeholder="Ex: Notebook Dell Inspiron"
+                    required
+                  />
+                  {aiAnalyzing && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                {aiSuggestion && (
+                  <div className="p-3 bg-primary/10 border border-primary/20 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-primary">
+                          🤖 Sugestão da IA ({aiSuggestion.confidence} confiança)
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {aiSuggestion.reasoning}
+                        </p>
+                      </div>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        onClick={applySuggestion}
+                        className="ml-2"
+                      >
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="code">Código (SKU) *</Label>
@@ -378,7 +476,14 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
+                <Label htmlFor="category">
+                  Categoria
+                  {aiSuggestion && (
+                    <span className="text-xs text-primary ml-2">
+                      (IA sugere: {categories.find(c => c.id === aiSuggestion.category)?.name})
+                    </span>
+                  )}
+                </Label>
                 <Select 
                   value={formData.category_id} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
@@ -390,6 +495,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
+                        {aiSuggestion?.category === category.id && (
+                          <span className="text-primary ml-2">🤖</span>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -522,7 +630,14 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="useful_life_years">Vida Útil (anos)</Label>
+                <Label htmlFor="useful_life_years">
+                  Vida Útil (anos)
+                  {aiSuggestion && (
+                    <span className="text-xs text-primary ml-2">
+                      (IA sugere: {aiSuggestion.usefulLife} anos)
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="useful_life_years"
                   type="number"
