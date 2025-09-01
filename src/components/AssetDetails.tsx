@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Globe, Tag, File, History, Calendar, DollarSign, MapPin } from 'lucide-react';
+import { User, Globe, Tag, File, History, Calendar, DollarSign, MapPin, Edit, QrCode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import EditAssetModal from './EditAssetModal';
+import QRCodeGenerator from './QRCodeGenerator';
 
 interface AssetDetailsProps {
   assetId: string;
@@ -30,6 +32,8 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -195,10 +199,14 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
       </DialogHeader>
       
       <Tabs defaultValue="summary" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="summary" className="flex items-center gap-2">
             <File className="h-4 w-4" />
             Resumo
+          </TabsTrigger>
+          <TabsTrigger value="edit" className="flex items-center gap-2">
+            <Edit className="h-4 w-4" />
+            Editar
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
@@ -375,6 +383,29 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
           )}
         </TabsContent>
 
+        <TabsContent value="edit" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Edit className="h-5 w-5" />
+                Editar Ativo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4">
+                <Button onClick={() => setShowEditModal(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Informações
+                </Button>
+                <Button variant="outline" onClick={() => setShowQRCode(true)}>
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Gerar QR Code
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="history" className="mt-6">
           <Card>
             <CardHeader>
@@ -414,6 +445,36 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Asset Modal */}
+      {showEditModal && asset && (
+        <EditAssetModal 
+          isOpen={showEditModal}
+          onOpenChange={setShowEditModal}
+          asset={asset}
+          onAssetUpdated={() => {
+            fetchAssetDetails();
+            fetchAuditLog();
+          }}
+        />
+      )}
+
+      {/* QR Code Modal */}
+      {showQRCode && asset && (
+        <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>QR Code do Ativo</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <QRCodeGenerator 
+                assetCode={asset.code}
+                assetName={asset.name}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </DialogContent>
   );
 };

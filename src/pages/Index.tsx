@@ -5,12 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Dashboard from '@/components/Dashboard';
-import AssetForm from '@/components/AssetForm';
-import AssetList from '@/components/AssetList';
-import ReportGenerator from '@/components/ReportGenerator';
+import InventoryManager from '@/components/InventoryManager';
 import EnhancedMaintenanceDashboard from '@/components/EnhancedMaintenanceDashboard';
-import GoogleAssetMap from '@/components/GoogleAssetMap';
-import QRCodeScanner from '@/components/QRCodeScanner';
+import AssetTrackingManager from '@/components/AssetTrackingManager';
 import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin, Users, Tag, FileText } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
 import CategoryManager from '@/components/CategoryManager';
@@ -82,18 +79,14 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-7 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-5 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
               </TabsTrigger>
               <TabsTrigger value="inventory" className="flex items-center gap-2">
-                <List className="w-4 h-4" />
+                <Package className="w-4 h-4" />
                 Inventário
-              </TabsTrigger>
-              <TabsTrigger value="add-asset" className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Novo Ativo
               </TabsTrigger>
               <TabsTrigger value="maintenance" className="flex items-center gap-2">
                 <Wrench className="w-4 h-4" />
@@ -102,10 +95,6 @@ const Index = () => {
               <TabsTrigger value="tracking" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Rastreamento
-              </TabsTrigger>
-              <TabsTrigger value="reports" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Relatórios
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -119,13 +108,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-6">
-            <AssetList />
-          </TabsContent>
-
-          <TabsContent value="add-asset" className="space-y-6">
-            <AssetForm 
-              onSuccess={() => setActiveTab('inventory')}
-            />
+            <InventoryManager />
           </TabsContent>
 
           <TabsContent value="maintenance" className="space-y-6">
@@ -133,22 +116,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="tracking" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GoogleAssetMap height="500px" />
-              <div className="space-y-6">
-                <QRCodeScanner 
-                  onScan={(result) => console.log('QR Scanned:', result)}
-                  onAssetFound={(assetCode) => {
-                    console.log('Asset found:', assetCode);
-                    // Here you could redirect to asset details or show asset info
-                  }}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="reports" className="space-y-6">
-            <ReportGenerator />
+            <AssetTrackingManager />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

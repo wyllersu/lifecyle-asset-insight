@@ -353,26 +353,6 @@ const AssetList = () => {
                   </div>
 
                   <div className="flex items-center gap-2 lg:flex-col lg:items-end">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setSelectedAssetForQR(asset)}
-                    >
-                      <QrCode className="h-4 w-4 mr-1" />
-                      QR Code
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setSelectedAssetForHistory(asset.id)}
-                    >
-                      <History className="h-4 w-4 mr-1" />
-                      Histórico
-                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -410,20 +390,6 @@ const AssetList = () => {
         )}
       </div>
 
-      {/* QR Code Modal */}
-      {selectedAssetForQR && (
-        <QRCodeGenerator 
-          assetCode={selectedAssetForQR.code}
-          assetName={selectedAssetForQR.name}
-        />
-      )}
-
-      {/* Asset History Modal */}
-      {selectedAssetForHistory && (
-        <AssetHistory 
-          assetId={selectedAssetForHistory}
-        />
-      )}
 
       {/* Asset Details Modal */}
       {selectedAssetForDetails && (
