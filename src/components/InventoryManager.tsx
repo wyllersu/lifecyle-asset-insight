@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FileText, Download, FileSpreadsheet } from 'lucide-react';
+import { Plus, FileText, Download, FileSpreadsheet, MapPin } from 'lucide-react';
 import AssetList from './AssetList';
 import AssetForm from './AssetForm';
 import ReportGenerator from './ReportGenerator';
+import AssetTrackingManager from './AssetTrackingManager';
 
 const InventoryManager = () => {
   const [activeSubTab, setActiveSubTab] = useState('list');
@@ -64,6 +65,10 @@ const InventoryManager = () => {
             <Plus className="h-4 w-4" />
             Novo Ativo
           </TabsTrigger>
+          <TabsTrigger value="tracking" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Rastreamento
+          </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Relatórios
@@ -76,6 +81,10 @@ const InventoryManager = () => {
 
         <TabsContent value="new" className="space-y-6">
           <AssetForm />
+        </TabsContent>
+
+        <TabsContent value="tracking" className="space-y-6">
+          <AssetTrackingManager />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">

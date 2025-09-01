@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Dashboard from '@/components/Dashboard';
 import InventoryManager from '@/components/InventoryManager';
 import EnhancedMaintenanceDashboard from '@/components/EnhancedMaintenanceDashboard';
-import AssetTrackingManager from '@/components/AssetTrackingManager';
 import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin, Users, Tag, FileText } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
 import CategoryManager from '@/components/CategoryManager';
@@ -79,7 +78,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-5 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-4 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
@@ -91,10 +90,6 @@ const Index = () => {
               <TabsTrigger value="maintenance" className="flex items-center gap-2">
                 <Wrench className="w-4 h-4" />
                 Manutenção
-              </TabsTrigger>
-              <TabsTrigger value="tracking" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Rastreamento
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -113,10 +108,6 @@ const Index = () => {
 
           <TabsContent value="maintenance" className="space-y-6">
             <EnhancedMaintenanceDashboard />
-          </TabsContent>
-
-          <TabsContent value="tracking" className="space-y-6">
-            <AssetTrackingManager />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
