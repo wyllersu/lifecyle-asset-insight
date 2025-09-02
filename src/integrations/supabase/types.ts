@@ -311,9 +311,34 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           budget: number | null
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -322,6 +347,7 @@ export type Database = {
         }
         Insert: {
           budget?: number | null
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -330,13 +356,22 @@ export type Database = {
         }
         Update: {
           budget?: number | null
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           manager_id?: string | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -424,6 +459,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          company_id: string | null
           created_at: string
           department_id: string | null
           full_name: string | null
@@ -435,6 +471,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           department_id?: string | null
           full_name?: string | null
@@ -446,6 +483,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           department_id?: string | null
           full_name?: string | null
@@ -456,6 +494,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_department_id_fkey"
             columns: ["department_id"]

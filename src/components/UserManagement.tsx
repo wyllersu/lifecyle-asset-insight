@@ -10,8 +10,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { Users, Building2, Package, Plus, Edit, Trash2 } from 'lucide-react';
+import { Users, Building2, Package, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+interface Company {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Profile {
   id: string;
@@ -20,6 +28,7 @@ interface Profile {
   role: string | null;
   department_id: string | null;
   unit_id: string | null;
+  company_id: string | null;
   created_at: string;
 }
 
@@ -29,6 +38,7 @@ interface Department {
   description: string | null;
   manager_id: string | null;
   budget: number | null;
+  company_id: string;
 }
 
 interface Unit {
@@ -40,6 +50,7 @@ interface Unit {
 }
 
 const UserManagement = () => {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -51,12 +62,19 @@ const UserManagement = () => {
   const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
 
   // Form states
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    description: ''
+  });
+
   const [departmentForm, setDepartmentForm] = useState({
     name: '',
     description: '',
-    budget: ''
+    budget: '',
+    company_id: ''
   });
 
   const [unitForm, setUnitForm] = useState({
@@ -82,6 +100,14 @@ const UserManagement = () => {
     try {
       setLoading(true);
       
+      // Fetch companies
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name');
+
+      if (companiesError) throw companiesError;
+
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -111,6 +137,7 @@ const UserManagement = () => {
 
       if (unitsError) throw unitsError;
 
+      setCompanies(companiesData || []);
       setProfiles(profilesData || []);
       setDepartments(departmentsData || []);
       setUnits(unitsData || []);
@@ -158,6 +185,35 @@ const UserManagement = () => {
     }
   };
 
+  const handleCreateCompany = async () => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .insert({
+          name: companyForm.name,
+          description: companyForm.description || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Empresa criada com sucesso.",
+      });
+
+      setCompanyForm({ name: '', description: '' });
+      setIsCompanyDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error creating company:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar empresa.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreateDepartment = async () => {
     try {
       const { error } = await supabase
@@ -165,7 +221,8 @@ const UserManagement = () => {
         .insert({
           name: departmentForm.name,
           description: departmentForm.description || null,
-          budget: departmentForm.budget ? parseFloat(departmentForm.budget) : null
+          budget: departmentForm.budget ? parseFloat(departmentForm.budget) : null,
+          company_id: departmentForm.company_id
         });
 
       if (error) throw error;
@@ -175,7 +232,7 @@ const UserManagement = () => {
         description: "Departamento criado com sucesso.",
       });
 
-      setDepartmentForm({ name: '', description: '', budget: '' });
+      setDepartmentForm({ name: '', description: '', budget: '', company_id: '' });
       setIsDeptDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -316,6 +373,10 @@ const UserManagement = () => {
 
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="companies" className="flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            Empresas
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Usuários
@@ -553,6 +614,79 @@ const UserManagement = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="companies" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Empresas</h3>
+            <Dialog open={isCompanyDialogOpen} onOpenChange={setIsCompanyDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Empresa
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Criar Empresa</DialogTitle>
+                  <DialogDescription>
+                    Adicione uma nova empresa ao sistema
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-name">Nome</Label>
+                    <Input
+                      id="company-name"
+                      value={companyForm.name}
+                      onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Nome da empresa"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-description">Descrição</Label>
+                    <Textarea
+                      id="company-description"
+                      value={companyForm.description}
+                      onChange={(e) => setCompanyForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Descrição da empresa"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={() => setIsCompanyDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleCreateCompany}>
+                      Criar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {companies.map((company) => (
+              <Card key={company.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{company.name}</CardTitle>
+                  {company.description && (
+                    <CardDescription>{company.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <strong>Departamentos:</strong> {departments.filter(d => d.company_id === company.id).length}
+                    </p>
+                    <p className="text-sm">
+                      <strong>Usuários:</strong> {profiles.filter(p => p.company_id === company.id).length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
         <TabsContent value="departments" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Departamentos</h3>
@@ -571,6 +705,24 @@ const UserManagement = () => {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dept-company">Empresa</Label>
+                    <Select 
+                      value={departmentForm.company_id} 
+                      onValueChange={(value) => setDepartmentForm(prev => ({ ...prev, company_id: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="dept-name">Nome</Label>
                     <Input

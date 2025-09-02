@@ -15,6 +15,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+interface Company {
+  id: string;
+  name: string;
+  description: string;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -24,6 +30,7 @@ interface Category {
 interface Department {
   id: string;
   name: string;
+  company_id: string;
 }
 
 interface Unit {
@@ -39,6 +46,7 @@ interface AssetFormData {
   serial_number: string;
   description: string;
   category_id: string;
+  company_id: string;
   department_id: string;
   unit_id: string;
   purchase_value: string;
@@ -66,6 +74,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -83,6 +92,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     serial_number: '',
     description: '',
     category_id: '',
+    company_id: '',
     department_id: '',
     unit_id: '',
     purchase_value: '',
@@ -106,13 +116,15 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
 
   const fetchData = async () => {
     try {
-      const [categoriesResult, departmentsResult, unitsResult, profilesResult] = await Promise.all([
+      const [companiesResult, categoriesResult, departmentsResult, unitsResult, profilesResult] = await Promise.all([
+        supabase.from('companies').select('id, name, description').order('name'),
         supabase.from('categories').select('id, name').order('name'),
-        supabase.from('departments').select('id, name').order('name'),
+        supabase.from('departments').select('id, name, company_id').order('name'),
         supabase.from('units').select('id, name, department_id, departments(name)').order('name'),
         supabase.from('profiles').select('user_id, full_name').order('full_name')
       ]);
 
+      if (companiesResult.data) setCompanies(companiesResult.data);
       if (categoriesResult.data) setCategories(categoriesResult.data.map(cat => ({ ...cat, description: '' })));
       if (departmentsResult.data) setDepartments(departmentsResult.data);
       if (unitsResult.data) setUnits(unitsResult.data);
@@ -356,6 +368,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
         serial_number: '',
         description: '',
         category_id: '',
+        company_id: '',
         department_id: '',
         unit_id: '',
         purchase_value: '',
@@ -763,7 +776,32 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
             <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
               Organização e Responsabilidade
             </h3>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="company_id">Empresa</Label>
+                <Select 
+                  value={formData.company_id} 
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      company_id: value,
+                      department_id: '',
+                      unit_id: ''
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="department_id">Departamento</Label>
                 <Select 
@@ -772,16 +810,19 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                     setFormData(prev => ({ 
                       ...prev, 
                       department_id: value,
-                      unit_id: 'unassigned'
+                      unit_id: ''
                     }));
                   }}
+                  disabled={!formData.company_id}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um departamento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unassigned">Não atribuir departamento</SelectItem>
-                    {departments.map((dept) => (
+                    <SelectItem value="">Não atribuir departamento</SelectItem>
+                    {departments
+                      .filter(dept => dept.company_id === formData.company_id)
+                      .map((dept) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}
                       </SelectItem>
@@ -791,20 +832,21 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit_id">Unidade</Label>
-                <Select value={formData.unit_id} onValueChange={(value) => setFormData(prev => ({ ...prev, unit_id: value }))}>
+                <Select 
+                  value={formData.unit_id} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, unit_id: value }))}
+                  disabled={!formData.department_id}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma unidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unassigned">Não atribuir unidade</SelectItem>
+                    <SelectItem value="">Não atribuir unidade</SelectItem>
                     {units
-                      .filter(unit => 
-                        formData.department_id === 'unassigned' || formData.department_id === '' ? 
-                        true : unit.department_id === formData.department_id
-                      )
+                      .filter(unit => unit.department_id === formData.department_id)
                       .map((unit) => (
                       <SelectItem key={unit.id} value={unit.id}>
-                        {unit.name} ({unit.departments?.name})
+                        {unit.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -821,7 +863,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                   <SelectValue placeholder="Selecione um responsável (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Não atribuir responsável</SelectItem>
+                  <SelectItem value="">Não atribuir responsável</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.user_id} value={profile.user_id}>
                       {profile.full_name || profile.user_id}
