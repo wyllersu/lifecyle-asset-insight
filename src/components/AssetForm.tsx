@@ -819,7 +819,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                     <SelectValue placeholder="Selecione um departamento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não atribuir departamento</SelectItem>
+                    <SelectItem value="none">Não atribuir departamento</SelectItem>
                     {departments
                       .filter(dept => dept.company_id === formData.company_id)
                       .map((dept) => (
@@ -841,7 +841,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                     <SelectValue placeholder="Selecione uma unidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não atribuir unidade</SelectItem>
+                    <SelectItem value="none">Não atribuir unidade</SelectItem>
                     {units
                       .filter(unit => unit.department_id === formData.department_id)
                       .map((unit) => (
@@ -863,7 +863,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
                   <SelectValue placeholder="Selecione um responsável (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não atribuir responsável</SelectItem>
+                  <SelectItem value="none">Não atribuir responsável</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.user_id} value={profile.user_id}>
                       {profile.full_name || profile.user_id}
