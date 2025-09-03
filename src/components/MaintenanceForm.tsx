@@ -34,6 +34,8 @@ interface MaintenanceFormData {
   cost: string;
   scheduled_date: Date | undefined;
   labor_hours: string;
+  company_id: string;
+  unit_id: string;
 }
 
 const MaintenanceForm: React.FC<MaintenanceFormProps> = ({ assetId, onSuccess, onCancel }) => {
@@ -48,6 +50,8 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({ assetId, onSuccess, o
     cost: '',
     scheduled_date: undefined,
     labor_hours: '',
+    company_id: '',
+    unit_id: '',
   });
 
   useEffect(() => {

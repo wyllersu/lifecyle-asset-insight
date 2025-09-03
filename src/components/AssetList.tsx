@@ -10,10 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, DollarSign, Calendar, Building2, MapPin, Activity, Edit, QrCode, History, Eye, Trash2, User } from 'lucide-react';
+import { Search, DollarSign, Calendar, Building2, MapPin, Activity, Edit, QrCode, History, Eye, Trash2, User, Scan } from 'lucide-react';
 import QRCodeGenerator from './QRCodeGenerator';
 import AssetHistory from './AssetHistory';
 import AssetDetails from './AssetDetails';
+import QRCodeScanner from './QRCodeScanner';
+import GoogleAssetMap from './GoogleAssetMap';
 
 interface Asset {
   id: string;
@@ -52,6 +54,8 @@ const AssetList = () => {
   const [selectedAssetForQR, setSelectedAssetForQR] = useState<Asset | null>(null);
   const [selectedAssetForHistory, setSelectedAssetForHistory] = useState<string | null>(null);
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [profiles, setProfiles] = useState<any[]>([]);
   const { toast } = useToast();
 
@@ -211,8 +215,28 @@ const AssetList = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold text-foreground">Lista de Ativos</h2>
-        <div className="text-sm text-muted-foreground">
-          {filteredAssets.length} de {assets.length} ativos
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowScanner(true)}
+            className="flex items-center gap-2"
+          >
+            <Scan className="w-4 h-4" />
+            Scanner QR
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowMap(true)}
+            className="flex items-center gap-2"
+          >
+            <MapPin className="w-4 h-4" />
+            Mapa de Ativos
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            {filteredAssets.length} de {assets.length} ativos
+          </div>
         </div>
       </div>
 
@@ -398,6 +422,37 @@ const AssetList = () => {
             assetId={selectedAssetForDetails} 
             onClose={() => setSelectedAssetForDetails(null)} 
           />
+        </Dialog>
+      )}
+
+      {/* QR Code Scanner Modal */}
+      {showScanner && (
+        <Dialog open={showScanner} onOpenChange={setShowScanner}>
+          <QRCodeScanner 
+            onScan={(result) => {
+              console.log('QR Code scanned:', result);
+              toast({
+                title: "QR Code escaneado",
+                description: `Código: ${result}`,
+              });
+            }}
+            onAssetFound={(assetCode) => {
+              console.log('Asset found:', assetCode);
+              // Search for asset with this code
+              const foundAsset = assets.find(asset => asset.code === assetCode);
+              if (foundAsset) {
+                setSelectedAssetForDetails(foundAsset.id);
+                setShowScanner(false);
+              }
+            }}
+          />
+        </Dialog>
+      )}
+
+      {/* Asset Map Modal */}
+      {showMap && (
+        <Dialog open={showMap} onOpenChange={setShowMap}>
+          <GoogleAssetMap />
         </Dialog>
       )}
     </div>

@@ -286,21 +286,27 @@ const UserManagement = () => {
     }
 
     try {
-      // Create user account through Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create user account through Supabase Auth Admin API
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userForm.email,
         password: userForm.password,
-        options: {
-          data: {
-            full_name: userForm.full_name,
-          }
+        email_confirm: true,
+        user_metadata: {
+          full_name: userForm.full_name,
         }
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile
+        // Get current user's company_id for new user
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+
+        // Create profile for new user
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -309,6 +315,7 @@ const UserManagement = () => {
             role: userForm.role,
             department_id: userForm.department_id || null,
             unit_id: userForm.unit_id || null,
+            company_id: currentProfile?.company_id || null,
           });
 
         if (profileError) throw profileError;

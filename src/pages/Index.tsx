@@ -65,6 +65,15 @@ const Index = () => {
                 <User className="w-4 h-4" />
                 {user.email}
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setActiveTab('settings')}
+                className="flex items-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Configurações
+              </Button>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
@@ -78,7 +87,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-auto grid-cols-4 bg-card/50 backdrop-blur-sm">
+            <TabsList className="grid w-auto grid-cols-3 bg-card/50 backdrop-blur-sm">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
@@ -89,11 +98,7 @@ const Index = () => {
               </TabsTrigger>
               <TabsTrigger value="maintenance" className="flex items-center gap-2">
                 <Wrench className="w-4 h-4" />
-                Manutenção
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Configurações
+                Manutenções
               </TabsTrigger>
             </TabsList>
           </div>
@@ -110,28 +115,30 @@ const Index = () => {
             <EnhancedMaintenanceDashboard />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Tabs defaultValue="users" className="space-y-6">
-              <TabsList className="grid w-auto grid-cols-2 bg-card/50">
-                <TabsTrigger value="users" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Usuários
-                </TabsTrigger>
-                <TabsTrigger value="categories" className="flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
-                  Categorias
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="users">
-                <UserManagement />
-              </TabsContent>
-              
-              <TabsContent value="categories">
-                <CategoryManager />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <Tabs defaultValue="users" className="space-y-6">
+                <TabsList className="grid w-auto grid-cols-2 bg-card/50">
+                  <TabsTrigger value="users" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Usuários
+                  </TabsTrigger>
+                  <TabsTrigger value="categories" className="flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Categorias
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="users">
+                  <UserManagement />
+                </TabsContent>
+                
+                <TabsContent value="categories">
+                  <CategoryManager />
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
         </Tabs>
       </main>
     </div>
