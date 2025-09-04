@@ -122,6 +122,8 @@ const MaintenanceForm: React.FC<MaintenanceFormProps> = ({ assetId, onSuccess, o
         cost: '',
         scheduled_date: undefined,
         labor_hours: '',
+        company_id: '',
+        unit_id: '',
       });
 
       onSuccess?.();
