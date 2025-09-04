@@ -74,17 +74,109 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingMaintenance, setEditingMaintenance] = useState<MaintenanceItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [filterAsset, setFilterAsset] = useState('');
+  const [filterUnit, setFilterUnit] = useState('');
+  const [assets, setAssets] = useState<Array<{id: string, name: string, code: string}>>([]);
+  const [units, setUnits] = useState<Array<{id: string, name: string}>>([]);
+  const [maintenanceDates, setMaintenanceDates] = useState<Date[]>([]);
 
   useEffect(() => {
     fetchData();
+    fetchAssets();
+    fetchUnits();
   }, []);
+
+  useEffect(() => {
+    if (filterAsset || filterUnit) {
+      fetchFilteredMaintenances();
+    } else {
+      fetchRecentMaintenances();
+    }
+  }, [filterAsset, filterUnit]);
 
   const fetchData = async () => {
     await Promise.all([
       fetchMaintenanceStats(),
       fetchRecentMaintenances(),
-      fetchChartData()
+      fetchChartData(),
+      fetchMaintenanceDates()
     ]);
+  };
+
+  const fetchAssets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('assets')
+        .select('id, name, code')
+        .eq('status', 'active')
+        .order('name');
+      
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar ativos:', error);
+    }
+  };
+
+  const fetchUnits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('units')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setUnits(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar unidades:', error);
+    }
+  };
+
+  const fetchMaintenanceDates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('asset_maintenance')
+        .select('scheduled_date')
+        .in('status', ['agendada', 'em_andamento']);
+      
+      if (error) throw error;
+      
+      const dates = data?.map(item => new Date(item.scheduled_date)) || [];
+      setMaintenanceDates(dates);
+    } catch (error) {
+      console.error('Erro ao buscar datas de manutenção:', error);
+    }
+  };
+
+  const fetchFilteredMaintenances = async () => {
+    try {
+      let query = supabase
+        .from('asset_maintenance')
+        .select(`
+          *,
+          assets (
+            name,
+            code,
+            unit_id
+          )
+        `)
+        .order('scheduled_date', { ascending: true });
+
+      if (filterAsset) {
+        query = query.eq('asset_id', filterAsset);
+      }
+
+      if (filterUnit) {
+        query = query.eq('assets.unit_id', filterUnit);
+      }
+
+      const { data, error } = await query.limit(10);
+
+      if (error) throw error;
+      setRecentMaintenances(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar manutenções filtradas:', error);
+    }
   };
 
   const fetchMaintenanceStats = async () => {
@@ -400,7 +492,7 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
-              Calendário
+              Calendário de Manutenções
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -410,35 +502,80 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
               onSelect={(date) => date && setSelectedDate(date)}
               locale={ptBR}
               className="rounded-md border"
+              modifiers={{
+                maintenance: maintenanceDates,
+              }}
+              modifiersStyles={{
+                maintenance: { backgroundColor: 'hsl(var(--primary))', color: 'white', fontWeight: 'bold' },
+              }}
             />
+            <div className="mt-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-primary"></div>
+                <span>Dias com manutenções agendadas</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Maintenances List */}
+      {/* Filtros e Lista de Manutenções */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Manutenções</CardTitle>
-          <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Manutenção
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>Nova Manutenção</DialogTitle>
-              </DialogHeader>
-              <MaintenanceForm 
-                onSuccess={() => {
-                  setShowAddForm(false);
-                  fetchData();
-                }}
-                onCancel={() => setShowAddForm(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-4">
+            {/* Filtros */}
+            <div className="flex items-center gap-2">
+              <Select value={filterAsset} onValueChange={setFilterAsset}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar por ativo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os ativos</SelectItem>
+                  {assets.map((asset) => (
+                    <SelectItem key={asset.id} value={asset.id}>
+                      {asset.code} - {asset.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterUnit} onValueChange={setFilterUnit}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar por unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as unidades</SelectItem>
+                  {units.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Manutenção
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Nova Manutenção</DialogTitle>
+                </DialogHeader>
+                <MaintenanceForm 
+                  onSuccess={() => {
+                    setShowAddForm(false);
+                    fetchData();
+                  }}
+                  onCancel={() => setShowAddForm(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

@@ -4,8 +4,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Loader2, FileText, TrendingUp } from 'lucide-react';
+import { Loader2, FileText, TrendingUp, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 interface ChartData {
   name: string;
@@ -13,12 +15,21 @@ interface ChartData {
   total?: number;
 }
 
+interface ReportMetadata {
+  title: string;
+  insights: string[];
+}
+
 const ReportGenerator = () => {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [reportTitle, setReportTitle] = useState('');
+  const [reportMetadata, setReportMetadata] = useState<ReportMetadata>({
+    title: '',
+    insights: []
+  });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleGenerateReport = async () => {
     if (!prompt.trim()) {
@@ -30,45 +41,57 @@ const ReportGenerator = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para gerar relatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Placeholder para integração futura com API da Gemini
-      // const response = await fetch('/api/gemini-report', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ prompt }),
-      // });
+      console.log('Generating report with AI...');
       
-      // Por enquanto, simular dados de exemplo
-      setTimeout(() => {
-        const mockData: ChartData[] = [
-          { name: 'Tecnologia', value: 45000, total: 15 },
-          { name: 'Mobiliário', value: 32000, total: 8 },
-          { name: 'Veículos', value: 85000, total: 3 },
-          { name: 'Equipamentos', value: 28000, total: 12 },
-          { name: 'Outros', value: 15000, total: 6 },
-        ];
-        
-        setChartData(mockData);
-        setReportTitle('Valor Total por Categoria de Ativos');
-        setLoading(false);
-        
-        toast({
-          title: "Relatório gerado!",
-          description: "Dados carregados com sucesso",
-        });
-      }, 2000);
+      const { data, error } = await supabase.functions.invoke('ai-report-generator', {
+        body: { 
+          prompt: prompt.trim(),
+          userToken: user.id 
+        },
+      });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw new Error('Erro ao chamar função de geração de relatório');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erro desconhecido na geração do relatório');
+      }
+
+      console.log('Report generated successfully:', data);
+      
+      setChartData(data.data || []);
+      setReportMetadata({
+        title: data.title || 'Relatório Gerado',
+        insights: data.insights || []
+      });
+      
+      toast({
+        title: "Relatório gerado!",
+        description: "Dados carregados com sucesso usando IA",
+      });
       
     } catch (error) {
       console.error('Error generating report:', error);
       toast({
         title: "Erro ao gerar relatório",
-        description: "Não foi possível processar a solicitação",
+        description: error instanceof Error ? error.message : "Não foi possível processar a solicitação",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -127,9 +150,9 @@ const ReportGenerator = () => {
       {chartData.length > 0 && (
         <Card className="bg-gradient-card border-border/50">
           <CardHeader>
-            <CardTitle className="text-foreground">{reportTitle}</CardTitle>
+            <CardTitle className="text-foreground">{reportMetadata.title}</CardTitle>
             <CardDescription>
-              Relatório gerado baseado na sua solicitação
+              Relatório gerado baseado na sua solicitação usando IA
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -188,6 +211,24 @@ const ReportGenerator = () => {
                 <div className="text-sm text-muted-foreground">Categorias</div>
               </div>
             </div>
+            
+            {/* AI Insights */}
+            {reportMetadata.insights.length > 0 && (
+              <div className="mt-6 p-4 border border-border rounded-lg bg-muted/50">
+                <h4 className="flex items-center gap-2 font-semibold mb-3">
+                  <Lightbulb className="w-4 h-4 text-primary" />
+                  Insights da IA
+                </h4>
+                <ul className="space-y-2">
+                  {reportMetadata.insights.map((insight, index) => (
+                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                      {insight}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

@@ -259,6 +259,73 @@ const AssetForm: React.FC<AssetFormProps> = ({ onSuccess, onCancel }) => {
     }
   };
 
+  const handleAIAnalysis = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Nome necessário",
+        description: "Digite o nome do ativo para usar a análise por IA",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAiAnalyzing(true);
+    
+    try {
+      console.log('Calling AI analysis...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-asset-analysis', {
+        body: { 
+          assetName: formData.name,
+          description: formData.description 
+        },
+      });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw new Error('Erro ao chamar análise de IA');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erro na análise de IA');
+      }
+
+      const analysis = data.analysis;
+      console.log('AI Analysis result:', analysis);
+
+      // Find matching category
+      const matchingCategory = categories.find(cat => 
+        cat.name.toLowerCase().includes(analysis.categoria.toLowerCase()) ||
+        analysis.categoria.toLowerCase().includes(cat.name.toLowerCase())
+      );
+
+      // Update form with AI suggestions
+      setFormData(prev => ({
+        ...prev,
+        category_id: matchingCategory?.id || prev.category_id,
+        useful_life_years: analysis.vidaUtil.toString(),
+        residual_value: prev.purchase_value ? 
+          (parseFloat(prev.purchase_value) * analysis.valorResidualPercentual / 100).toString() : 
+          prev.residual_value
+      }));
+
+      toast({
+        title: "Análise concluída!",
+        description: `IA sugeriu: ${analysis.categoria}, ${analysis.vidaUtil} anos de vida útil. ${analysis.justificativa}`,
+      });
+      
+    } catch (error) {
+      console.error('Error in AI analysis:', error);
+      toast({
+        title: "Erro na análise",
+        description: error instanceof Error ? error.message : "Erro ao analisar ativo com IA",
+        variant: "destructive",
+      });
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
