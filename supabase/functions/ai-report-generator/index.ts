@@ -115,8 +115,7 @@ serve(async (req) => {
             content: schemaPrompt
           }
         ],
-        max_tokens: 800,
-        temperature: 0.1,
+        max_completion_tokens: 800,
       }),
     });
 

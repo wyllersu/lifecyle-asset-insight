@@ -78,8 +78,7 @@ serve(async (req) => {
             content: analysisPrompt
           }
         ],
-        max_tokens: 1000,
-        temperature: 0.3,
+        max_completion_tokens: 1000,
       }),
     });
 
