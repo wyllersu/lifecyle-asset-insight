@@ -531,7 +531,7 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
                   <SelectValue placeholder="Filtrar por ativo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os ativos</SelectItem>
+                  <SelectItem value="all">Todos os ativos</SelectItem>
                   {assets.map((asset) => (
                     <SelectItem key={asset.id} value={asset.id}>
                       {asset.code} - {asset.name}
@@ -545,7 +545,7 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
                   <SelectValue placeholder="Filtrar por unidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as unidades</SelectItem>
+                  <SelectItem value="all">Todas as unidades</SelectItem>
                   {units.map((unit) => (
                     <SelectItem key={unit.id} value={unit.id}>
                       {unit.name}
