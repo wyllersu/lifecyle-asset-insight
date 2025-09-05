@@ -145,12 +145,18 @@ const CategoryManager = () => {
       if (checkError) throw checkError;
 
       if (assetsUsingCategory && assetsUsingCategory.length > 0) {
+        // First, update all assets to remove the category reference
+        const { error: updateError } = await supabase
+          .from('assets')
+          .update({ category_id: null })
+          .eq('category_id', categoryId);
+
+        if (updateError) throw updateError;
+
         toast({
-          title: "Erro",
-          description: "Não é possível excluir esta categoria pois ela está sendo usada por ativos.",
-          variant: "destructive",
+          title: "Aviso",
+          description: "A categoria foi removida dos ativos que a utilizavam.",
         });
-        return;
       }
 
       const { error } = await supabase

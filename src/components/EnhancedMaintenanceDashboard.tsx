@@ -162,11 +162,11 @@ const EnhancedMaintenanceDashboard: React.FC = () => {
         `)
         .order('scheduled_date', { ascending: true });
 
-      if (filterAsset) {
+      if (filterAsset && filterAsset !== "all") {
         query = query.eq('asset_id', filterAsset);
       }
 
-      if (filterUnit) {
+      if (filterUnit && filterUnit !== "all") {
         query = query.eq('assets.unit_id', filterUnit);
       }
 

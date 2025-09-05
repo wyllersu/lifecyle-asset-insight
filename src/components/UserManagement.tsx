@@ -186,12 +186,21 @@ const UserManagement = () => {
   };
 
   const handleCreateCompany = async () => {
+    if (!companyForm.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da empresa é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('companies')
         .insert({
-          name: companyForm.name,
-          description: companyForm.description || null
+          name: companyForm.name.trim(),
+          description: companyForm.description?.trim() || null
         });
 
       if (error) throw error;
@@ -215,12 +224,30 @@ const UserManagement = () => {
   };
 
   const handleCreateDepartment = async () => {
+    if (!departmentForm.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome do departamento é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!departmentForm.company_id) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma empresa para o departamento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('departments')
         .insert({
-          name: departmentForm.name,
-          description: departmentForm.description || null,
+          name: departmentForm.name.trim(),
+          description: departmentForm.description?.trim() || null,
           budget: departmentForm.budget ? parseFloat(departmentForm.budget) : null,
           company_id: departmentForm.company_id
         });
@@ -246,12 +273,30 @@ const UserManagement = () => {
   };
 
   const handleCreateUnit = async () => {
+    if (!unitForm.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da unidade é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!unitForm.department_id) {
+      toast({
+        title: "Erro",
+        description: "Selecione um departamento para a unidade.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('units')
         .insert({
-          name: unitForm.name,
-          description: unitForm.description || null,
+          name: unitForm.name.trim(),
+          description: unitForm.description?.trim() || null,
           department_id: unitForm.department_id
         });
 
