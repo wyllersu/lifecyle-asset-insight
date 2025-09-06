@@ -6,7 +6,7 @@ import { Plus, FileText, Download, FileSpreadsheet, MapPin } from 'lucide-react'
 import AssetList from './AssetList';
 import AssetForm from './AssetForm';
 import ReportGenerator from './ReportGenerator';
-import AssetTrackingManager from './AssetTrackingManager';
+import ConsolidatedTrackingSystem from './ConsolidatedTrackingSystem';
 
 const InventoryManager = () => {
   const [activeSubTab, setActiveSubTab] = useState('list');
@@ -14,30 +14,123 @@ const InventoryManager = () => {
   const handleExportPDF = async () => {
     try {
       const { jsPDF } = await import('jspdf');
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { toast } = await import('@/hooks/use-toast');
+      
+      // Buscar dados dos ativos
+      const { data: assets, error } = await supabase
+        .from('assets')
+        .select(`
+          *,
+          categories(name),
+          departments(name),
+          units(name)
+        `);
+
+      if (error) {
+        toast({ title: "Erro", description: "Erro ao buscar dados para exportação", variant: "destructive" });
+        return;
+      }
+
       const doc = new jsPDF();
       
+      // Cabeçalho
+      doc.setFontSize(20);
       doc.text('Relatório de Inventário - AssetFlow', 20, 20);
+      doc.setFontSize(12);
       doc.text('Data: ' + new Date().toLocaleDateString('pt-BR'), 20, 30);
       
-      // TODO: Adicionar dados dos ativos
-      doc.text('Lista de Ativos exportada em formato PDF', 20, 50);
+      // Dados dos ativos
+      let yPosition = 50;
+      doc.setFontSize(14);
+      doc.text('Lista de Ativos:', 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(10);
+      assets?.forEach((asset, index) => {
+        if (yPosition > 280) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        const category = asset.categories?.name || 'Sem categoria';
+        const department = asset.departments?.name || 'Sem departamento';
+        
+        doc.text(`${index + 1}. ${asset.name}`, 20, yPosition);
+        doc.text(`Código: ${asset.code}`, 30, yPosition + 8);
+        doc.text(`Categoria: ${category}`, 30, yPosition + 16);
+        doc.text(`Departamento: ${department}`, 30, yPosition + 24);
+        doc.text(`Valor: R$ ${asset.purchase_value.toLocaleString('pt-BR')}`, 30, yPosition + 32);
+        doc.text(`Status: ${asset.status}`, 30, yPosition + 40);
+        
+        yPosition += 50;
+      });
       
       doc.save('inventario-assets.pdf');
+      toast({ title: "Sucesso", description: "PDF exportado com sucesso!" });
     } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ title: "Erro", description: "Erro ao exportar PDF", variant: "destructive" });
     }
   };
 
-  const handleExportCSV = () => {
-    // TODO: Implementar exportação para CSV
-    const csvContent = "data:text/csv;charset=utf-8,Nome,Código,Categoria,Valor\n";
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "inventario-assets.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCSV = async () => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { toast } = await import('@/hooks/use-toast');
+      
+      // Buscar dados dos ativos
+      const { data: assets, error } = await supabase
+        .from('assets')
+        .select(`
+          *,
+          categories(name),
+          departments(name),
+          units(name)
+        `);
+
+      if (error) {
+        toast({ title: "Erro", description: "Erro ao buscar dados para exportação", variant: "destructive" });
+        return;
+      }
+
+      // Criar CSV
+      const headers = ['Nome', 'Código', 'Categoria', 'Departamento', 'Valor', 'Status', 'Data de Compra'];
+      const csvRows = [headers.join(',')];
+
+      assets?.forEach(asset => {
+        const category = asset.categories?.name || 'Sem categoria';
+        const department = asset.departments?.name || 'Sem departamento';
+        const purchaseDate = new Date(asset.purchase_date).toLocaleDateString('pt-BR');
+        
+        const row = [
+          `"${asset.name}"`,
+          `"${asset.code}"`,
+          `"${category}"`,
+          `"${department}"`,
+          `"R$ ${asset.purchase_value.toLocaleString('pt-BR')}"`,
+          `"${asset.status}"`,
+          `"${purchaseDate}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "inventario-assets.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ title: "Sucesso", description: "CSV exportado com sucesso!" });
+    } catch (error) {
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ title: "Erro", description: "Erro ao exportar CSV", variant: "destructive" });
+    }
   };
 
   return (
@@ -84,7 +177,7 @@ const InventoryManager = () => {
         </TabsContent>
 
         <TabsContent value="tracking" className="space-y-6">
-          <AssetTrackingManager />
+          <ConsolidatedTrackingSystem />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">

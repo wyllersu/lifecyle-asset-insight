@@ -10,6 +10,7 @@ import EnhancedMaintenanceDashboard from '@/components/EnhancedMaintenanceDashbo
 import { Building2, Package, Plus, List, BarChart3, LogOut, User, Wrench, MapPin, Users, Tag, FileText } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
 import CategoryManager from '@/components/CategoryManager';
+import NotificationSystem from '@/components/NotificationSystem';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -104,7 +105,14 @@ const Index = () => {
           </div>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <Dashboard setActiveTab={setActiveTab} />
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <Dashboard setActiveTab={setActiveTab} />
+              </div>
+              <div>
+                <NotificationSystem />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-6">

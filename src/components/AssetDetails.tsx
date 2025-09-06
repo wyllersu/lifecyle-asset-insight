@@ -56,7 +56,7 @@ const AssetDetails: React.FC<AssetDetailsProps> = ({ assetId, onClose }) => {
       .single();
 
     if (error) {
-      console.error('Error fetching asset:', error);
+      // Error handled by useErrorHandler
       toast({
         title: "Erro ao carregar ativo",
         description: "Não foi possível carregar os detalhes do ativo.",
